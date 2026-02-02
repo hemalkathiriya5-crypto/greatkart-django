@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,11 +27,16 @@ SECRET_KEY = 'django-insecure-lg_q8&((r5pos$hw4k)q8+j9+3j_ri9pnge^n=)91t0)rv2(-q
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
+# CSRF Configuration - Django 6.0 compatible
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+]
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,11 +44,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+
     'category',
-    'account',
     'store',
     'carts',
+    'accounts',   # ✅ only this (account nahi)
 ]
+
+
+SITE_ID = 1
+
+
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -54,27 +70,29 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'greatkart.urls'
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
-        'APP_DIRS': True,
+        'DIRS': [BASE_DIR / 'templates'],  # ✅ this must exist
+        'APP_DIRS': True,                  # ✅ VERY IMPORTANT
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'category.context_processors.menu_links',
-                'carts.context_processors.counter',
             ],
         },
     },
 ]
 
+
+
+
 WSGI_APPLICATION = 'greatkart.wsgi.application'
 
-AUTH_USER_MODEL = 'account.Account'
+AUTH_USER_MODEL = 'accounts.Account'
+
 
 
 # Database
@@ -133,3 +151,26 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+from django.contrib.messages import constants as messages
+
+MESSAGES_TAGS = {
+    messages.ERROR: 'danger',
+    50: 'critical',
+}
+
+# smtp configuration
+# Using custom email backend to handle SSL certificate verification issues
+EMAIL_BACKEND = 'greatkart.email_backend.SSLEmailBackend'
+
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = 'a0a40e001@smtp-brevo.com'
+EMAIL_HOST_PASSWORD = 'dLnE9tU1r3Rf7mvy'
+# Use your verified Gmail address here (verify it in Brevo dashboard first)
+DEFAULT_FROM_EMAIL = 'GreatKart <hemalkathiriya34@gmail.com>'
+
+# Timeout for SMTP connections (in seconds)
+EMAIL_TIMEOUT = 10
